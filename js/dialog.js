@@ -119,5 +119,6 @@ export function createBrowserDialog({ start, url, standaloneUrl, text }) {
         try { await opening; } finally { opening = null; }
     }
 
-    return { open };
+    // The frame lets the extension answer only its own Hanaikada; close hides the dialog after a send.
+    return { open, close: () => dialog.close(), frame };
 }

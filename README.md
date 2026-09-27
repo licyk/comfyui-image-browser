@@ -8,6 +8,8 @@ Open [Hanaikada](https://pypi.org/project/hanaikada/) inside ComfyUI using the *
 - **All folders** is where the browser opens: ComfyUI's `output` and `input` side by side. The extension keeps it on, so Hanaikada's settings switch has no effect; `COMFYUI_IMAGE_BROWSER_COMBINED_VIEW=0` turns it off, and Browse then opens on `output`.
 - New results appear as soon as a prompt finishes: the extension asks Hanaikada to index the folders ComfyUI just wrote to, instead of waiting for its folder watcher.
 - Uploading, copying, moving, renaming or deleting files in `input` refreshes the image lists of nodes such as **Load Image**.
+- **Open workflow** (in an image's menu or the viewer's Send button) opens the workflow saved in a ComfyUI PNG, WebP or AVIF, or the parameters of a WebUI PNG, in a new workflow tab; the current workflow is left as it was.
+- **Send to Load Image** puts the image in the selected **Load Image** node, or a new one: a file from `output` is uploaded to `input` as a copy, a file already in `input` is chosen as it is. Both need Hanaikada 0.1.3 or newer; with an older one these entries do not appear.
 - Closing the window keeps its folder, search and viewer; reopening shows them again.
 - Starts Hanaikada on demand, with no scan during ComfyUI startup.
 - Reuses the dependency installation framework from [ComfyUI-HakuImg](https://github.com/licyk/ComfyUI-HakuImg). No Node.js build is needed.

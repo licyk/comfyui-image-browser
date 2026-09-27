@@ -26,15 +26,31 @@ window.browserTestApi = api;
 """
 APP_JS = """
 window.browserTestRefreshes = 0;
+// Enough of the canvas and LiteGraph for "Send to Load Image", and a record of handled files.
+window.browserTestFiles = [];
+window.browserTestNodes = [];
+window.LiteGraph = {createNode: type => ({
+    type, comfyClass: type, pos: [0, 0], setDirtyCanvas() {},
+    widgets: [{name: 'image', value: '', options: {values: []}, callback(value) { this.preview = value; }}],
+})};
 const settings = document.createElement('div');
 document.body.append(settings);
 export const app = {
     menu: {settingsGroup: {element: settings}},
+    canvas: {
+        selected_nodes: {},
+        graph: {add: node => { window.browserTestNodes.push(node); return node; }},
+        selectNode(node) { this.selected_nodes = {[window.browserTestNodes.indexOf(node)]: node}; },
+        ds: {convertCanvasToOffset: ([x, y]) => [x, y]},
+        canvas: {clientWidth: 800, clientHeight: 600},
+    },
+    async handleFile(file) { window.browserTestFiles.push({name: file.name, type: file.type, size: file.size}); },
     extensionManager: {
         setting: {get: () => 'en'},
         command: {execute: async () => {window.browserTestRefreshes++;}},
     },
     async registerExtension(extension) {
+        window.browserTestApp = app;
         window.browserExtension = extension;
         await extension.setup?.();
         for (const action of extension.actionBarButtons || []) {
@@ -68,6 +84,9 @@ export class ComfyButtonGroup {
 """
 
 
+UPLOADS = web.AppKey("uploads", list)
+
+
 def script(body: str):
     async def handler(_):
         return web.Response(text=body, content_type="text/javascript")
@@ -75,10 +94,24 @@ def script(body: str):
     return handler
 
 
-def harness(service: BrowserService, proxy: BrowserProxy, frontend_version: str | None = None) -> tuple[web.Application, list[str]]:
+def harness(
+    service: BrowserService, proxy: BrowserProxy, frontend_version: str | None = None, input_dir: Path | None = None
+) -> tuple[web.Application, list[str]]:
     """A page loading the extension like ComfyUI does; records which legacy modules it imports."""
     app = web.Application()
     legacy_imports: list[str] = []
+    app[UPLOADS] = []
+
+    async def upload(request):
+        # ComfyUI's /upload/image, reduced to what the extension sends: an image into input.
+        form = await request.post()
+        field = form["image"]
+        assert form["type"] == "input" and input_dir is not None
+        (input_dir / field.filename).write_bytes(field.file.read())
+        request.app[UPLOADS].append(field.filename)
+        return web.json_response({"name": field.filename, "subfolder": "", "type": "input"})
+
+    app.router.add_post("/comfy/api/upload/image", upload)
     version = f"<script>window.__COMFYUI_FRONTEND_VERSION__ = {frontend_version!r};</script>" if frontend_version else ""
 
     async def page(_):
@@ -266,6 +299,78 @@ async def test_button_iframe_results_close_reopen_retry_and_refresh(tmp_path):
             await tab.get_by_role("button", name="Retry", exact=True).click()
             await expect(frame.get_by_role("navigation", name="Main")).to_be_visible(timeout=30000)
             await expect(frame.locator("img.loaded")).to_have_count(2, timeout=30000)
+            assert errors == []
+        finally:
+            await browser.close()
+            await proxy.close()
+            await service.close()
+
+
+async def test_send_to_comfyui_opens_workflows_and_fills_load_image(tmp_path):
+    from PIL import Image
+
+    output, input, _ = comfy_dirs(tmp_path)
+    comfy_png(output / "ComfyUI_00001_.png")
+    Image.new("RGB", (2, 2)).save(output / "plain.png")
+    comfy_png(input / "mask.png")
+    service = BrowserService(tmp_path / "data", lambda: collect_image_roots(output, input), lambda: None)
+    proxy = BrowserProxy(service)
+    app, _ = harness(service, proxy, "1.53.6", input_dir=input)
+    async with TestServer(app) as server, async_playwright() as playwright:
+        browser = await launch(playwright)
+        try:
+            tab = await browser.new_page()
+            errors = []
+            tab.on("pageerror", lambda error: errors.append(str(error)))
+            await tab.goto(str(server.make_url("/comfy/")))
+            button = tab.get_by_role("button", name="Image Browser", exact=True)
+            dialog = tab.locator("dialog.comfy-image-browser")
+            frame = tab.frame_locator("iframe")
+            menu = frame.locator('.menu[role="menu"]').last
+
+            async def open_menu(folder: str, name: str):
+                await button.click()
+                await expect(frame.get_by_role("navigation", name="Main")).to_be_visible(timeout=30000)
+                await frame.locator("body").evaluate("(el, f) => { location.hash = '#/browse?root=' + f; }", folder)
+                cell = frame.locator(".slot").filter(has_text=name)
+                await expect(cell).to_be_visible(timeout=15000)
+                await cell.click(button="right")
+                await expect(menu).to_be_visible()
+
+            # A ComfyUI image offers both; a PNG without metadata only Load Image.
+            await open_menu("comfyui-output", "plain.png")
+            await expect(menu.get_by_text("Send to Load Image")).to_be_visible()
+            await expect(menu.get_by_text("Open workflow")).to_have_count(0)
+            await frame.locator("body").press("Escape")
+            await frame.locator(".slot").filter(has_text="ComfyUI_00001_.png").click(button="right")
+
+            # Open workflow: ComfyUI's own drop path gets the file, with its type, and the dialog closes.
+            await menu.get_by_text("Open workflow").click()
+            await tab.wait_for_function("window.browserTestFiles.length === 1")
+            assert await tab.evaluate("window.browserTestFiles[0]") == {
+                "name": "ComfyUI_00001_.png",
+                "type": "image/png",
+                "size": (output / "ComfyUI_00001_.png").stat().st_size,
+            }
+            await expect(dialog).not_to_have_attribute("open", "")
+
+            # Send to Load Image from output: a copy is uploaded into input and a new node shows it.
+            await open_menu("comfyui-output", "ComfyUI_00001_.png")
+            await menu.get_by_text("Send to Load Image").click()
+            await tab.wait_for_function("window.browserTestNodes.length === 1")
+            node = await tab.evaluate(
+                "({type: window.browserTestNodes[0].type, value: window.browserTestNodes[0].widgets[0].value, preview: window.browserTestNodes[0].widgets[0].preview})"
+            )
+            assert node == {"type": "LoadImage", "value": "ComfyUI_00001_.png", "preview": "ComfyUI_00001_.png"}
+            assert app[UPLOADS] == ["ComfyUI_00001_.png"] and (input / "ComfyUI_00001_.png").exists()
+            await expect(dialog).not_to_have_attribute("open", "")
+
+            # From input: the file is chosen as it is, in the selected Load Image node, with no upload.
+            await open_menu("comfyui-input", "mask.png")
+            await menu.get_by_text("Send to Load Image").click()
+            await tab.wait_for_function("window.browserTestNodes[0].widgets[0].value === 'mask.png'")
+            assert await tab.evaluate("window.browserTestNodes.length") == 1
+            assert app[UPLOADS] == ["ComfyUI_00001_.png"]
             assert errors == []
         finally:
             await browser.close()

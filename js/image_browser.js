@@ -2,6 +2,7 @@ import { app } from "../../scripts/app.js";
 import { api } from "../../scripts/api.js";
 import { createBrowserDialog } from "./dialog.js";
 import { hasActionBar, resultItems } from "./frontend.js";
+import { canOpenWorkflow, inputValue, isBridgeMessage, NS, PROTOCOL, sendRequest, TARGETS } from "./host.js";
 import { readStartupResponse } from "./startup.js";
 
 const translations = {
@@ -19,6 +20,13 @@ const translations = {
             unexpected: "The request did not return a Hanaikada start-up result. Check whether a proxy or frontend page is handling this address.",
             server: "The backend could not start Hanaikada. Check the ComfyUI log for the underlying error.",
         },
+        send: {
+            noWorkflow: "ComfyUI reads workflows from its own PNG, WebP and AVIF files and from WebUI PNGs; this file has none it can open.",
+            noNode: "Could not add a Load Image node to the workflow.",
+            uploadFailed: "Uploading the image to ComfyUI's input folder failed:",
+            foreign: "Only files from this ComfyUI's image browser can be sent.",
+            unknown: "ComfyUI does not take this.",
+        },
     },
     zh: {
         title: "图片浏览器", maximize: "最大化", restore: "还原", close: "关闭", retry: "重试", newTab: "在新标签页打开",
@@ -33,6 +41,13 @@ const translations = {
             denied: "启动请求被拒绝或被重定向到登录页。请检查登录状态；使用反向代理时，请核对配置的外部地址。",
             unexpected: "该地址没有返回 Hanaikada 启动结果，请检查请求是否被代理或前端页面接管。",
             server: "后端未能启动 Hanaikada，请检查 ComfyUI 日志中的具体错误。",
+        },
+        send: {
+            noWorkflow: "ComfyUI 只能从它自己的 PNG、WebP、AVIF 文件以及 WebUI 的 PNG 中读取工作流；这个文件里没有可打开的工作流。",
+            noNode: "无法在工作流中添加“加载图像”节点。",
+            uploadFailed: "上传图片到 ComfyUI 的 input 文件夹失败：",
+            foreign: "只能发送来自此 ComfyUI 图片浏览器的文件。",
+            unknown: "ComfyUI 不接受该操作。",
         },
     },
 };
@@ -54,6 +69,105 @@ function open() {
         },
     });
     return panel.open();
+}
+
+// -- Hanaikada's "Send to …": its host bridge (protocol v1) -------------------------------------
+
+function reply(target, message) {
+    target.postMessage({ ns: NS, v: PROTOCOL, ...message }, window.location.origin);
+}
+
+async function fetchFile(item) {
+    const url = new URL(item.url, window.location.href);
+    // Only files this ComfyUI serves through the browser's own proxy.
+    if (url.origin !== window.location.origin) throw new Error(text().send.foreign);
+    const response = await fetch(url, { credentials: "same-origin" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const blob = await response.blob();
+    // ComfyUI's file readers dispatch on the MIME type.
+    return new File([blob], item.name, { type: blob.type || response.headers.get("Content-Type") || "" });
+}
+
+// ComfyUI's own drop path reads the workflow (or the API prompt, or a WebUI PNG's parameters) and
+// opens it in a new workflow tab named after the file; the current workflow stays as it was.
+async function openWorkflow(item, platform) {
+    if (!canOpenWorkflow(item.name, platform)) throw new Error(text().send.noWorkflow);
+    await app.handleFile(await fetchFile(item));
+}
+
+// A copy in ComfyUI's input folder, through its public upload route (an identical file already
+// there is reused under its name).
+async function uploadCopy(item) {
+    const body = new FormData();
+    body.append("image", await fetchFile(item));
+    body.append("type", "input");
+    const response = await api.fetchApi("/upload/image", { method: "POST", body });
+    if (response.status !== 200) throw new Error(`${text().send.uploadFailed} HTTP ${response.status}`);
+    const data = await response.json();
+    return data.subfolder ? `${data.subfolder}/${data.name}` : data.name;
+}
+
+function visibleCenter(canvas) {
+    try {
+        const [x, y] = canvas.ds.convertCanvasToOffset([canvas.canvas.clientWidth / 2, canvas.canvas.clientHeight / 2]);
+        return [x - 160, y - 160];
+    } catch {
+        return [0, 0];
+    }
+}
+
+// The selected Load Image node, or a new one in the middle of the view.
+function loadImageNode() {
+    const canvas = app.canvas;
+    const selected = Object.values(canvas?.selected_nodes ?? {}).filter((node) => (node.comfyClass ?? node.type) === "LoadImage");
+    if (selected.length === 1) return selected[0];
+    const graph = canvas?.graph ?? app.graph;
+    const node = window.LiteGraph?.createNode("LoadImage");
+    if (!node || !graph) throw new Error(text().send.noNode);
+    node.pos = visibleCenter(canvas);
+    graph.add(node);
+    canvas?.selectNode?.(node);
+    return node;
+}
+
+async function sendToLoadImage(item) {
+    const existing = inputValue(item);
+    const value = existing ?? (await uploadCopy(item));
+    const node = loadImageNode();
+    const widget = node.widgets?.find((w) => w.name === "image");
+    if (!widget) throw new Error(text().send.noNode);
+    const values = widget.options?.values;
+    if (Array.isArray(values) && !values.includes(value)) values.push(value);
+    widget.value = value;
+    // The frontend's own callback on this widget loads the preview.
+    widget.callback?.(value);
+    node.setDirtyCanvas?.(true, true);
+    // Other Load Image nodes list the new file too.
+    if (existing === null) void refresh();
+}
+
+function answerHanaikada(event) {
+    const frame = panel?.frame;
+    if (!frame || event.source !== frame.contentWindow || event.origin !== window.location.origin || !isBridgeMessage(event.data)) return;
+    if (event.data.type === "hello") {
+        reply(event.source, { type: "host", host: { name: "comfyui", label: "ComfyUI", targets: TARGETS } });
+        return;
+    }
+    const request = sendRequest(event.data);
+    if (!request) return;
+    const source = event.source;
+    void (async () => {
+        try {
+            if (request.target === "workflow") await openWorkflow(request.item, request.platform);
+            else if (request.target === "loadImage") await sendToLoadImage(request.item);
+            else throw new Error(text().send.unknown);
+            reply(source, { type: "result", id: request.id, ok: true });
+            // Back to the canvas, where the new tab or node now is.
+            panel.close();
+        } catch (error) {
+            reply(source, { type: "result", id: request.id, ok: false, message: error?.message || String(error) });
+        }
+    })();
 }
 
 let refreshTimer;
@@ -136,6 +250,7 @@ app.registerExtension({
             refreshTimer = setTimeout(() => void refresh(), 400);
         });
         api.addEventListener("executed", (event) => queueScan(resultItems(event.detail?.output)));
+        window.addEventListener("message", answerHanaikada);
         // Newer frontends log every import of the deprecated legacy button modules.
         const legacy = !hasActionBar(window.__COMFYUI_FRONTEND_VERSION__) && app.menu?.settingsGroup?.element;
         if (!legacy || !(await addLegacyButton())) {

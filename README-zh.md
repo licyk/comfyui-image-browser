@@ -6,6 +6,8 @@
 - 浏览页默认打开“全部文件夹”：并列显示 ComfyUI 的 `output` 和 `input`。扩展固定开启它，Hanaikada 设置中的开关不会生效；可用 `COMFYUI_IMAGE_BROWSER_COMBINED_VIEW=0` 关闭，此时浏览页默认打开 `output`。
 - 任务完成后新图片立即出现：扩展会让 Hanaikada 立即索引 ComfyUI 刚写入的文件夹，不必等待目录轮询。
 - 在 `input` 目录中上传、复制、移动、重命名或删除文件后，**Load Image** 等节点的图片列表会自动刷新。
+- **打开工作流**（图片菜单或查看器的“发送到”按钮）会在新的工作流标签页中打开 ComfyUI 的 PNG、WebP、AVIF 中保存的工作流，或 WebUI PNG 中的参数；当前工作流保持不变。
+- **发送到加载图像节点**会把图片放进选中的 **Load Image** 节点（没有选中时新建一个）：`output` 中的文件会复制上传到 `input`，已在 `input` 中的文件直接选用。两者都需要 Hanaikada 0.1.3 或更高版本；版本较旧时不会出现这些选项。
 - 关闭窗口后保留当前目录、搜索和查看器状态，再次打开即可继续。
 - 首次打开时启动服务，日常启动 ComfyUI 不扫描图片。
 - Python 安装和目录结构参考 [ComfyUI-HakuImg](https://github.com/licyk/ComfyUI-HakuImg)，无需 Node.js 或前端构建。
