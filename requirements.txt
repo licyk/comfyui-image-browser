@@ -1,0 +1,4 @@
+hanaikada>=0.1.1
+aiohttp
+multidict
+yarl

@@ -1,0 +1,31 @@
+[project]
+name = "comfyui-image-browser"
+version = "0.1.0"
+description = "Browse, search and manage ComfyUI's generated images with Hanaikada inside ComfyUI."
+requires-python = ">=3.10"
+license = { text = "GPL-3.0-only" }
+
+[project.urls]
+Repository = "https://github.com/licyk/comfyui-image-browser"
+
+[tool.comfy]
+PublisherId = "licyk"
+DisplayName = "ComfyUI Image Browser"
+Icon = ""
+
+[tool.ruff]
+line-length = 140
+target-version = "py310"
+lint.select = ["E4", "E7", "E9", "F", "I"]
+
+[tool.ty.environment]
+python-version = "3.10"
+extra-paths = ["../ComfyUI"]
+
+[tool.ty.src]
+include = ["comfyui_image_browser", "prestartup_script.py"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--import-mode=importlib"
+asyncio_mode = "auto"
