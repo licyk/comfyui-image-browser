@@ -18,7 +18,7 @@ Open Hanaikada inside ComfyUI using the **Lucide Images** toolbar button (toolti
 
 ## Installation
 
-Requires Python 3.10 or newer and [Hanaikada](https://pypi.org/project/hanaikada/) 0.1.5 or newer (`hanaikada>=0.1.5`).
+Requires Python 3.10 or newer and [Hanaikada](https://pypi.org/project/hanaikada/) 0.1.6 or newer (`hanaikada>=0.1.6`).
 
 From the ComfyUI directory, clone the extension using Git:
 
