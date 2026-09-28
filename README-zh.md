@@ -1,6 +1,8 @@
 # ComfyUI Image Browser
 
-在 ComfyUI 顶部点击 **Lucide Images** 图片图标（提示文字“图片浏览器”），直接打开 [Hanaikada 花筏](https://pypi.org/project/hanaikada/)，浏览、搜索、标记、对比和管理 ComfyUI 生成的图片。提示词、种子、模型和采样器等参数从 ComfyUI 写入图片的工作流中读取。
+适用于 ComfyUI 的图片浏览扩展，由 [Hanaikada 花筏](https://github.com/licyk/Hanaikada) 驱动。
+
+在 ComfyUI 顶部点击 **Lucide Images** 图片图标（提示文字“图片浏览器”），直接打开 Hanaikada，浏览、搜索、标记、对比和管理 ComfyUI 生成的图片。提示词、种子、模型和采样器等参数从 ComfyUI 写入图片的工作流中读取。
 
 - 默认打开 ComfyUI 的 `output` 目录，`input` 目录作为第二个根目录；两者都遵循 `--output-directory`、`--input-directory` 和 `--base-directory`。
 - 浏览页默认打开“全部文件夹”：并列显示 ComfyUI 的 `output` 和 `input`。扩展固定开启它，Hanaikada 设置中的开关不会生效；可用 `COMFYUI_IMAGE_BROWSER_COMBINED_VIEW=0` 关闭，此时浏览页默认打开 `output`。
@@ -13,6 +15,8 @@
 - Python 安装和目录结构参考 [ComfyUI-HakuImg](https://github.com/licyk/ComfyUI-HakuImg)，无需 Node.js 或前端构建。
 
 ## 安装
+
+需要 Python 3.10 或更高版本，以及 [Hanaikada](https://pypi.org/project/hanaikada/) 0.1.5 或更高版本（`hanaikada>=0.1.5`）。
 
 在 ComfyUI 目录下使用 Git 克隆本扩展：
 

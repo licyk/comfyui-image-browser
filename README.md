@@ -2,7 +2,9 @@
 
 [中文说明](README-zh.md)
 
-Open [Hanaikada](https://pypi.org/project/hanaikada/) inside ComfyUI using the **Lucide Images** toolbar button (tooltip: **Image Browser**). Browse, search, tag, compare and manage the images ComfyUI generates, with every prompt, seed, model and sampler read back from the workflow ComfyUI saved into each file.
+An image browser for ComfyUI, powered by [Hanaikada](https://github.com/licyk/Hanaikada).
+
+Open Hanaikada inside ComfyUI using the **Lucide Images** toolbar button (tooltip: **Image Browser**). Browse, search, tag, compare and manage the images ComfyUI generates, with every prompt, seed, model and sampler read back from the workflow ComfyUI saved into each file.
 
 - Opens ComfyUI's `output` folder, with `input` as a second folder. Both follow `--output-directory`, `--input-directory` and `--base-directory`.
 - **All folders** is where the browser opens: ComfyUI's `output` and `input` side by side. The extension keeps it on, so Hanaikada's settings switch has no effect; `COMFYUI_IMAGE_BROWSER_COMBINED_VIEW=0` turns it off, and Browse then opens on `output`.
@@ -15,6 +17,8 @@ Open [Hanaikada](https://pypi.org/project/hanaikada/) inside ComfyUI using the *
 - Reuses the dependency installation framework from [ComfyUI-HakuImg](https://github.com/licyk/ComfyUI-HakuImg). No Node.js build is needed.
 
 ## Installation
+
+Requires Python 3.10 or newer and [Hanaikada](https://pypi.org/project/hanaikada/) 0.1.5 or newer (`hanaikada>=0.1.5`).
 
 From the ComfyUI directory, clone the extension using Git:
 
