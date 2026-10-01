@@ -9,14 +9,12 @@
 - 任务完成后新图片立即出现：扩展会让 Hanaikada 立即索引 ComfyUI 刚写入的文件夹，不必等待目录轮询。
 - 在 `input` 目录中上传、复制、移动、重命名或删除文件后，**Load Image** 等节点的图片列表会自动刷新。
 - **打开工作流**（图片菜单或查看器的“发送到”按钮）会在新的工作流标签页中打开 ComfyUI 的 PNG、WebP、AVIF 中保存的工作流，或 WebUI PNG 中的参数；当前工作流保持不变。
-- **发送到加载图像节点**会把图片放进选中的 **Load Image** 节点（没有选中时新建一个）：`output` 中的文件会复制上传到 `input`，已在 `input` 中的文件直接选用。两者都需要 Hanaikada 0.1.3 或更高版本；版本较旧时不会出现这些选项。
+- **发送到加载图像节点**会把图片放进选中的 **Load Image** 节点（没有选中时新建一个）：`output` 中的文件会复制上传到 `input`，已在 `input` 中的文件直接选用。
 - 关闭窗口后保留当前目录、搜索和查看器状态，再次打开即可继续。
 - 首次打开时启动服务，日常启动 ComfyUI 不扫描图片。
 - Python 安装和目录结构参考 [ComfyUI-HakuImg](https://github.com/licyk/ComfyUI-HakuImg)，无需 Node.js 或前端构建。
 
 ## 安装
-
-需要 Python 3.10 或更高版本，以及 [Hanaikada](https://pypi.org/project/hanaikada/) 0.1.6 或更高版本（`hanaikada>=0.1.6`）。
 
 在 ComfyUI 目录下使用 Git 克隆本扩展：
 
@@ -30,7 +28,7 @@ git clone https://github.com/licyk/comfyui-image-browser.git custom_nodes/comfyu
 
 顶部按钮或 Tools 菜单中的 **Open Image Browser** 打开窗口，默认进入 Hanaikada 浏览页面的“全部文件夹”，支持最大化、关闭和重试。浏览器内没有聚焦任何控件时按 Esc 关闭窗口；浏览器内的 Esc 优先用于取消选择或关闭菜单、抽屉和查看器。
 
-新版前端（1.32.4 及以上）使用操作栏按钮，旧版前端使用旧顶部菜单。窗口标题栏提供 **在新标签页打开**，即使内嵌窗口启动失败也可以使用：新标签页会在自己的来源下独立启动 Hanaikada，再进入浏览页面。
+新版前端使用操作栏按钮，旧版前端使用旧顶部菜单。窗口标题栏提供 **在新标签页打开**，即使内嵌窗口启动失败也可以使用：新标签页会在自己的来源下独立启动 Hanaikada，再进入浏览页面。
 
 根目录由 ComfyUI 决定，在 Hanaikada 中不可新增、修改或删除，因此浏览器无法访问 ComfyUI 图片目录以外的路径。设置 `COMFYUI_IMAGE_BROWSER_INCLUDE_TEMP=1` 可额外浏览 `temp` 目录（预览图），ComfyUI 每次启动都会清空该目录，因此只浏览不索引。修改 ComfyUI 目录参数后需重启。
 

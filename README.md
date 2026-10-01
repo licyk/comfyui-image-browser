@@ -11,14 +11,12 @@ Open Hanaikada inside ComfyUI using the **Lucide Images** toolbar button (toolti
 - New results appear as soon as a prompt finishes: the extension asks Hanaikada to index the folders ComfyUI just wrote to, instead of waiting for its folder watcher.
 - Uploading, copying, moving, renaming or deleting files in `input` refreshes the image lists of nodes such as **Load Image**.
 - **Open workflow** (in an image's menu or the viewer's Send button) opens the workflow saved in a ComfyUI PNG, WebP or AVIF, or the parameters of a WebUI PNG, in a new workflow tab; the current workflow is left as it was.
-- **Send to Load Image** puts the image in the selected **Load Image** node, or a new one: a file from `output` is uploaded to `input` as a copy, a file already in `input` is chosen as it is. Both need Hanaikada 0.1.3 or newer; with an older one these entries do not appear.
+- **Send to Load Image** puts the image in the selected **Load Image** node, or a new one: a file from `output` is uploaded to `input` as a copy, a file already in `input` is chosen as it is.
 - Closing the window keeps its folder, search and viewer; reopening shows them again.
 - Starts Hanaikada on demand, with no scan during ComfyUI startup.
 - Reuses the dependency installation framework from [ComfyUI-HakuImg](https://github.com/licyk/ComfyUI-HakuImg). No Node.js build is needed.
 
 ## Installation
-
-Requires Python 3.10 or newer and [Hanaikada](https://pypi.org/project/hanaikada/) 0.1.6 or newer (`hanaikada>=0.1.6`).
 
 From the ComfyUI directory, clone the extension using Git:
 
@@ -32,7 +30,7 @@ Restart ComfyUI and refresh the browser. The prestartup script automatically ins
 
 Use the toolbar button or **Tools → Open Image Browser**. The window opens Hanaikada's Browse page on **All folders** and supports maximize, close and retry. Press Escape with nothing focused in the browser to close it; inside the browser, Escape first clears a selection or closes a menu, drawer or the viewer.
 
-The toolbar button uses the frontend's action bar (frontend 1.32.4 and newer), or the legacy top menu on older frontends. **Open in new tab** is always available in the dialog header, including after startup failure. The new tab starts Hanaikada independently from its own origin before opening the browser.
+The toolbar button uses the frontend's action bar, or the legacy top menu on older frontends. **Open in new tab** is always available in the dialog header, including after startup failure. The new tab starts Hanaikada independently from its own origin before opening the browser.
 
 The folders are fixed by ComfyUI: Hanaikada cannot add, change or remove them, so the browser never reaches beyond ComfyUI's own image folders. Set `COMFYUI_IMAGE_BROWSER_INCLUDE_TEMP=1` to also browse the `temp` folder (previews), which ComfyUI empties on every start; it is browsed but not indexed. Restart after changing ComfyUI's directory options.
 
