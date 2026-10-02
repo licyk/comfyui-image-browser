@@ -1,6 +1,6 @@
 [project]
 name = "comfy-image-browser"
-version = "0.1.8"
+version = "0.1.9"
 description = "Browse, search and manage ComfyUI's generated images with Hanaikada inside ComfyUI."
 requires-python = ">=3.10"
 license = { text = "GPL-3.0-only" }
