@@ -12,6 +12,8 @@ Open Hanaikada inside ComfyUI using the **Lucide Images** toolbar button (toolti
 - Uploading, copying, moving, renaming or deleting files in `input` refreshes the image lists of nodes such as **Load Image**.
 - **Open workflow** (in an image's menu or the viewer's Send button) opens the workflow saved in a ComfyUI PNG, WebP or AVIF, or the parameters of a WebUI PNG, in a new workflow tab; the current workflow is left as it was.
 - **Send to Load Image** puts the image in the selected **Load Image** node, or a new one: a file from `output` is uploaded to `input` as a copy, a file already in `input` is chosen as it is.
+- **Drag to insert**: drag a picture from the browser onto the canvas, and the workflow saved inside that file is inserted into the workflow already open, at the drop point, with fresh node and link ids. The nodes already on the canvas stay as they were; dragging several pictures inserts the first one.
+- The window is not modal: the canvas stays usable, and can take that drop, while the browser is open. Its header moves it, its corner handle resizes it, and the size is remembered for the next open.
 - Closing the window keeps its folder, search and viewer; reopening shows them again.
 - Starts Hanaikada on demand, with no scan during ComfyUI startup.
 - Reuses the dependency installation framework from [ComfyUI-HakuImg](https://github.com/licyk/ComfyUI-HakuImg). No Node.js build is needed.
@@ -28,7 +30,7 @@ Restart ComfyUI and refresh the browser. The prestartup script automatically ins
 
 ## Behavior
 
-Use the toolbar button or **Tools → Open Image Browser**. The window opens Hanaikada's Browse page on **All folders** and supports maximize, close and retry. Press Escape with nothing focused in the browser to close it; inside the browser, Escape first clears a selection or closes a menu, drawer or the viewer.
+Use the toolbar button or **Tools → Open Image Browser**. The window opens Hanaikada's Browse page on **All folders** and supports maximize, close and retry. Because the window is not modal, Escape only closes it when the focus is inside the browser and nothing there is focused; inside the browser, Escape first clears a selection or closes a menu, drawer or the viewer.
 
 The toolbar button uses the frontend's action bar, or the legacy top menu on older frontends. **Open in new tab** is always available in the dialog header, including after startup failure. The new tab starts Hanaikada independently from its own origin before opening the browser.
 

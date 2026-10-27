@@ -4,6 +4,7 @@ import { createBrowserDialog } from "./dialog.js";
 import { hasActionBar, resultItems } from "./frontend.js";
 import { canOpenWorkflow, inputValue, isBridgeMessage, NS, PROTOCOL, sendRequest, TARGETS } from "./host.js";
 import { readStartupResponse } from "./startup.js";
+import { installWorkflowDrop } from "./workflow_drop.js";
 
 const translations = {
     en: {
@@ -27,6 +28,12 @@ const translations = {
             foreign: "Only files from this ComfyUI's image browser can be sent.",
             unknown: "ComfyUI does not take this.",
         },
+        drop: {
+            noWorkflow: "This picture holds no workflow to insert.",
+            unsupported: "This ComfyUI frontend cannot insert a workflow; update it and try again.",
+            failed: "Inserting the workflow failed:",
+            firstOnly: "Only the first picture's workflow was inserted.",
+        },
     },
     zh: {
         title: "图片浏览器", maximize: "最大化", restore: "还原", close: "关闭", retry: "重试", newTab: "在新标签页打开",
@@ -48,6 +55,12 @@ const translations = {
             uploadFailed: "上传图片到 ComfyUI 的 input 文件夹失败：",
             foreign: "只能发送来自此 ComfyUI 图片浏览器的文件。",
             unknown: "ComfyUI 不接受该操作。",
+        },
+        drop: {
+            noWorkflow: "这张图片里没有可插入的工作流。",
+            unsupported: "当前 ComfyUI 前端不支持插入工作流，请更新前端后重试。",
+            failed: "插入工作流失败：",
+            firstOnly: "一次只插入了第一张图片的工作流。",
         },
     },
 };
@@ -251,6 +264,7 @@ app.registerExtension({
         });
         api.addEventListener("executed", (event) => queueScan(resultItems(event.detail?.output)));
         window.addEventListener("message", answerHanaikada);
+        installWorkflowDrop(() => text().drop);
         // Newer frontends log every import of the deprecated legacy button modules.
         const legacy = !hasActionBar(window.__COMFYUI_FRONTEND_VERSION__) && app.menu?.settingsGroup?.element;
         if (!legacy || !(await addLegacyButton())) {
