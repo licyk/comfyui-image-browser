@@ -29,6 +29,17 @@
 }
 .comfy-image-browser-button { justify-content: center; }
 .comfy-image-browser-icon { display: inline-block; width: 1em; height: 1em; vertical-align: middle; }
+/* Match the frontend's built-in extensions button (Button variant="secondary" size="icon"). */
+.comfy-image-browser-toolbar-button {
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border-radius: var(--radius-lg, 0.5rem);
+    background-color: var(--secondary, var(--secondary-background));
+    color: var(--foreground, var(--base-foreground));
+}
+.comfy-image-browser-toolbar-button:hover { background-color: var(--accent, var(--secondary-background-hover)); }
+.comfy-image-browser-toolbar-button > i { width: 1rem; height: 1rem; }
 .comfy-image-browser button:focus-visible { outline: 2px solid var(--input-text, #eee); outline-offset: 2px; }
 .comfy-image-browser > iframe { flex: 1; width: 100%; min-height: 0; border: 0; background: var(--comfy-menu-bg, #222); }
 .comfy-image-browser [hidden] { display: none !important; }

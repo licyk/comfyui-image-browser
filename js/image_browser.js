@@ -258,7 +258,8 @@ app.registerExtension({
                 name: "ComfyUI.ImageBrowser.Toolbar",
                 actionBarButtons: [{
                     icon: "icon-[lucide--images]", tooltip: text().title,
-                    class: "comfy-image-browser-button", onClick: () => void open(),
+                    class: "comfy-image-browser-button comfy-image-browser-toolbar-button",
+                    onClick: () => void open(),
                 }],
             });
         }
